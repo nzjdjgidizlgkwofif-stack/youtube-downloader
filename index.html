@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Audio Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .description {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .download-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .download-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .status {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .download-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .download-link:hover {
+            background: #218838;
+        }
+
+        .error {
+            color: #dc3545;
+            padding: 10px;
+            background: #f8d7da;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-top: 30px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .info-box h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .info-box li {
+            margin-bottom: 5px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status-badge.active {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-badge.inactive {
+            background: #dc3545;
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 YouTube Audio Downloader</h1>
+        <p class="description">Download audio from any YouTube video</p>
+        
+        <!-- Backend Status -->
+        <div style="text-align: right; margin-bottom: 20px;">
+            <span id="backend-status" class="status-badge inactive">Backend: Checking...</span>
+        </div>
+        
+        <div class="input-group">
+            <input 
+                type="text" 
+                id="url" 
+                placeholder="Paste YouTube URL here (e.g., https://www.youtube.com/watch?v=...)"
+                autocomplete="off"
+            >
+            <button id="downloadBtn" onclick="startDownload()">Download Audio</button>
+        </div>
+
+        <div id="downloads"></div>
+
+        <div class="info-box">
+            <h3>📌 How to use:</h3>
+            <ul>
+                <li>1. Paste any YouTube video URL</li>
+                <li>2. Click "Download Audio"</li>
+                <li>3. Wait for processing</li>
+                <li>4. Click download link to save MP3</li>
+            </ul>
+            <p style="margin-top: 10px; color: #666;">⚠️ Note: First download might take 30-60 seconds as the backend wakes up (free tier).</p>
+        </div>
+    </div>
+
+    <script>
+        // IMPORTANT: Replace with your actual backend URL after deploying
+        const API_BASE_URL = 'https://your-backend-url.onrender.com'; // Change this!
+        
+        let activeDownloads = new Set();
+
+        // Check backend status on load
+        checkBackendStatus();
+
+        async function checkBackendStatus() {
+            const statusEl = document.getElementById('backend-status');
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                if (response.ok) {
+                    statusEl.textContent = 'Backend: Online';
+                    statusEl.className = 'status-badge active';
+                } else {
+                    throw new Error('Backend offline');
+                }
+            } catch (error) {
+                statusEl.textContent = 'Backend: Offline';
+                statusEl.className = 'status-badge inactive';
+            }
+        }
+
+        async function startDownload() {
+            const url = document.getElementById('url').value.trim();
+            const downloadBtn = document.getElementById('downloadBtn');
+            
+            if (!url) {
+                alert('Please enter a YouTube URL');
+                return;
+            }
+
+            // Validate URL
+            if (!url.includes('youtube.com/watch') && !url.includes('youtu.be/')) {
+                alert('Please enter a valid YouTube video URL');
+                return;
+            }
+
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = 'Starting...';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to start download');
+                }
+
+                const data = await response.json();
+                
+                if (data.id) {
+                    activeDownloads.add(data.id);
+                    addDownloadItem(data.id);
+                    trackProgress(data.id);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+                checkBackendStatus(); // Recheck backend status
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.textContent = 'Download Audio';
+            }
+        }
+
+        function addDownloadItem(id) {
+            const container = document.getElementById('downloads');
+            const item = document.createElement('div');
+            item.className = 'download-item';
+            item.id = `download-${id}`;
+            item.innerHTML = `
+                <div class="download-title" id="title-${id}">Processing...</div>
+                <div class="status" id="status-${id}">Starting download...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-${id}" style="width: 0%"></div>
+                </div>
+                <div id="actions-${id}"></div>
+            `;
+            container.insertBefore(item, container.firstChild);
+        }
+
+        function trackProgress(id) {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/progress/${id}`);
+                    const data = await response.json();
+
+                    updateUI(id, data);
+
+                    if (data.status === 'completed' || data.status === 'error') {
+                        clearInterval(interval);
+                        activeDownloads.delete(id);
+                        
+                        if (data.status === 'completed') {
+                            showDownloadButton(id);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Progress error:', error);
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+
+        function updateUI(id, data) {
+            const titleEl = document.getElementById(`title-${id}`);
+            const statusEl = document.getElementById(`status-${id}`);
+            const progressEl = document.getElementById(`progress-${id}`);
+
+            if (titleEl && data.title) {
+                titleEl.textContent = data.title;
+            }
+
+            if (statusEl) {
+                const statusMessages = {
+                    'starting': '⏳ Starting...',
+                    'downloading': '📥 Downloading...',
+                    'processing': '⚙️ Processing audio...',
+                    'completed': '✅ Download completed!',
+                    'error': '❌ Error: ' + (data.error || 'Unknown error')
+                };
+                statusEl.textContent = statusMessages[data.status] || data.status;
+            }
+
+            if (progressEl && data.progress) {
+                progressEl.style.width = `${data.progress}%`;
+            }
+        }
+
+        function showDownloadButton(id) {
+            const actionsDiv = document.getElementById(`actions-${id}`);
+            if (actionsDiv) {
+                actionsDiv.innerHTML = `
+                    <a href="${API_BASE_URL}/download-file/${id}" class="download-link" download>
+                        ⬇️ Download MP3
+                    </a>
+                `;
+            }
+        }
+
+        // Auto-refresh backend status every 30 seconds
+        setInterval(checkBackendStatus, 30000);
+    </script>
+</body>
+</html>
